@@ -174,54 +174,44 @@ public BigNumber removeLeadingZeros() {
 public BigNumber minus(BigNumber a) {
     int n1 = numberOfDigits;
     int n2 = a.numberOfDigits;
-    int diff = Math.abs(n1 - n2);
     int maxSize = Math.max(n1, n2);
-    BigNumber result = new BigNumber(maxSize);
+    int[] resultDigits = new int[maxSize];
+    
+    int borrow = 0;
 
-    // Adjust the size of numbers if needed
-    if (n1 > n2)
-        a.extendZero(diff);
-    else if (n2 > n1)
-        this.extendZero(diff);
-
-    int k = 0, borrow = 0;
-    int j = maxSize;
-    boolean foundNonZero = false;
-
-    while (j > 0) {
-        k++;
-        int digitMinus = Digits[maxSize - k] - a.Digits[maxSize - k] - borrow;
+    for (int i = maxSize - 1; i >= 0; i--) {
+        int digitMinus = Digits[i] - borrow;
+        if (i >= maxSize - n2) {
+            digitMinus -= a.Digits[i - (maxSize - n2)];
+        }
 
         if (digitMinus < 0) {
-            Digits[maxSize - k] += 10;
-            digitMinus = Digits[maxSize - k] - a.Digits[maxSize - k] - borrow;
-            Digits[maxSize - k - 1]--;
+            digitMinus += 10;
+            borrow = 1;
+        } else {
+            borrow = 0;
         }
 
-        result.Digits[maxSize - k] = (byte) digitMinus;
-
-        // Check if the current digit is non-zero
-        if (digitMinus != 0) {
-            foundNonZero = true;
-        }
-
-        borrow = (Digits[maxSize - k] < a.Digits[maxSize - k]) ? 1 : 0; // Update borrow
-
-        j--;
+        resultDigits[i] = digitMinus;
     }
 
     // Find the first non-zero digit in the result
     int firstNonZero = 0;
-    while (firstNonZero < maxSize && result.Digits[firstNonZero] == 0) {
+    while (firstNonZero < maxSize && resultDigits[firstNonZero] == 0) {
         firstNonZero++;
     }
 
     // Create a new BigNumber with the correct size
     int newSize = maxSize - firstNonZero;
     byte[] newDigits = new byte[newSize];
-    System.arraycopy(result.Digits, firstNonZero, newDigits, 0, newSize);
+    for (int i = firstNonZero; i < maxSize; i++) {
+        newDigits[i - firstNonZero] = (byte) resultDigits[i];
+    }
+
+    BigNumber result = new BigNumber(newSize);
     result.Digits = newDigits;
     result.numberOfDigits = newSize;
+
     return result;
 }
 
@@ -303,14 +293,15 @@ public BigNumber minus(BigNumber a) {
 }
 //TODO
 public BigNumber div(BigNumber divisor) {
-    BigNumber quotient = new BigNumber(this.numberOfDigits);
+    BigNumber quotient = new BigNumber("0");
     BigNumber remainder = new BigNumber(this.numberOfDigits);
 
     while (this.compare(divisor)) {
         remainder = this.minus(divisor);
-        remainder = remainder.removeLeadingZeros();
-        remainder = this;
+       // remainder = remainder;
+        //remainder = this;
         //remainder.print(); // Uncomment if you want to print the remainder
+        System.out.print(quotient);
         quotient.increment();
     }
 
